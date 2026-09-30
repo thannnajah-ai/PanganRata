@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { Plus, X, Calculator as CalcIcon, Navigation, Store, Sparkles, MessageCircle, Save } from "lucide-react";
+import { Plus, X, Calculator as CalcIcon, Navigation, Store, Sparkles, MessageCircle, Save, BookOpen } from "lucide-react";
+import { toast } from "sonner";
 import type { AppData } from "@/App";
 
 import { 
@@ -435,7 +436,10 @@ export function WartegCalculator({ data }: { data: AppData }) {
                 ledger.push(entry);
                 localStorage.setItem("warung_ledger", JSON.stringify(ledger));
                 
-                alert("Data belanja dan margin hari ini berhasil dicatat ke Buku Kas!");
+                toast.success("Buku Kas Diperbarui", {
+                  description: "Data belanja dan margin hari ini berhasil dicatat.",
+                  icon: <BookOpen className="w-4 h-4 text-accent-grain" />
+                });
               };
 
               return (
