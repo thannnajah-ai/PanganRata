@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo } from "react";
-import { turso } from "@/lib/turso";
 import { motion, AnimatePresence } from "motion/react";
 import { Plus, X, Calculator as CalcIcon, Navigation, Store, Sparkles } from "lucide-react";
+import type { AppData } from "@/App";
 
 import { 
   BaseCommodity, 
@@ -11,71 +11,57 @@ import {
   computeRouting 
 } from "./routing";
 
-export function WartegCalculator({ city = "DKI Jakarta" }: { city?: string }) {
+export function WartegCalculator({ data }: { data: AppData }) {
   const [catalog, setCatalog] = useState<BaseCommodity[]>([]);
   const [allMarketPrices, setAllMarketPrices] = useState<MarketPriceItem[]>([]);
-  const [cart, setCart] = useState<CartItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [cart, setCart] = useState<CartItem[]>(() => {
+    try {
+      const saved = localStorage.getItem("panganrata_cart");
+      if (saved) return JSON.parse(saved);
+    } catch (e) {}
+    return [];
+  });
+  const [targetRevenue, setTargetRevenue] = useState<string>("");
 
   useEffect(() => {
-    async function fetchCatalog() {
-      try {
-        const today = new Date().toISOString().split("T")[0];
-        
-        // Single query fetching all market prices in this city
-        const res = await turso.execute({
-          sql: `
-            SELECT 
-              p.commodity_id, 
-              c.name as commodity_name, 
-              c.unit, 
-              p.price, 
-              m.id as market_id, 
-              m.name as market_name, 
-              m.location
-            FROM prices p 
-            JOIN commodities c ON p.commodity_id = c.id 
-            JOIN markets m ON p.market_id = m.id
-            WHERE p.date = ? AND (m.city = ? OR m.city IS NULL)
-            ORDER BY p.price ASC
-          `,
-          args: [today, city]
+    localStorage.setItem("panganrata_cart", JSON.stringify(cart));
+  }, [cart]);
+
+  useEffect(() => {
+    if (data.loading) return;
+
+    const { commodities, todayPrices } = data;
+
+    const raw = todayPrices.map((r: any) => {
+      const comm = commodities.find(c => c.id === r.commodity_id);
+      return {
+        commodityId: r.commodity_id as string,
+        commodityName: (comm?.name || "Unknown") as string,
+        unit: (comm?.unit || "kg") as string,
+        price: r.price as number,
+        marketId: r.market_id as string,
+        marketName: r.market_name as string,
+        location: r.location as string
+      };
+    });
+
+    setAllMarketPrices(raw);
+
+    // Group into unique base commodities with lowest price
+    const commMap = new Map<string, BaseCommodity>();
+    raw.forEach((r: any) => {
+      if (!commMap.has(r.commodityId)) {
+        commMap.set(r.commodityId, {
+          id: r.commodityId,
+          name: r.commodityName,
+          unit: r.unit,
+          minPrice: r.price
         });
-
-        const raw = res.rows.map((r: any) => ({
-          commodityId: r.commodity_id as string,
-          commodityName: r.commodity_name as string,
-          unit: r.unit as string,
-          price: r.price as number,
-          marketId: r.market_id as string,
-          marketName: r.market_name as string,
-          location: r.location as string
-        }));
-
-        setAllMarketPrices(raw);
-
-        // Group into unique base commodities with lowest price
-        const commMap = new Map<string, BaseCommodity>();
-        raw.forEach(r => {
-          if (!commMap.has(r.commodityId)) {
-            commMap.set(r.commodityId, {
-              id: r.commodityId,
-              name: r.commodityName,
-              unit: r.unit,
-              minPrice: r.price
-            });
-          }
-        });
-
-        setCatalog(Array.from(commMap.values()));
-      } catch (err) {
-        console.error("Calculator failed to fetch", err);
-      } finally {
-        setLoading(false);
       }
-    }
-    fetchCatalog();
-  }, [city]);
+    });
+
+    setCatalog(Array.from(commMap.values()));
+  }, [data]);
 
   const addRow = () => {
     if (catalog.length === 0) return;
@@ -98,7 +84,10 @@ export function WartegCalculator({ city = "DKI Jakarta" }: { city?: string }) {
 
   const formatIDR = (val: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(val);
 
-  if (loading) return null;
+  const revenueVal = parseFloat(targetRevenue) || 0;
+  const margin = revenueVal > 0 ? ((revenueVal - totalHPP) / revenueVal) * 100 : 0;
+
+  if (data.loading) return null;
 
   return (
     <div className="bg-surface-panel border border-border-subtle rounded-2xl sm:rounded-3xl overflow-hidden shadow-lg relative">
@@ -128,9 +117,17 @@ export function WartegCalculator({ city = "DKI Jakarta" }: { city?: string }) {
                   layout
                   initial={{ opacity: 0, scale: 0.95, y: -10 }}
                   animate={{ opacity: 1, scale: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.95, filter: "blur(4px)" }}
+                  exit={{ opacity: 0, scale: 0.95, filter: "blur(4px)", x: -80 }}
                   transition={{ type: "spring", stiffness: 500, damping: 30, mass: 0.8 }}
-                  className="flex flex-col sm:flex-row gap-2.5 sm:gap-3 bg-bg-canvas/60 border border-border-subtle/50 p-2.5 sm:p-3 rounded-2xl items-stretch sm:items-center"
+                  drag="x"
+                  dragConstraints={{ left: 0, right: 0 }}
+                  dragElastic={{ left: 0.3, right: 0 }}
+                  onDragEnd={(_, info) => {
+                    if (info.offset.x < -80) {
+                      removeRow(item.uid);
+                    }
+                  }}
+                  className="flex flex-col sm:flex-row gap-2.5 sm:gap-3 bg-bg-canvas/60 border border-border-subtle/50 p-2.5 sm:p-3 rounded-2xl items-stretch sm:items-center relative"
                 >
                   <div className="relative flex-1 w-full">
                     <select 
@@ -202,18 +199,63 @@ export function WartegCalculator({ city = "DKI Jakarta" }: { city?: string }) {
           </motion.button>
         </div>
 
-        {/* Total HPP Footer */}
-        <motion.div layout className="mt-6 sm:mt-8 pt-5 sm:pt-6 border-t border-border-subtle/80 flex flex-row justify-between items-center gap-2">
-          <div>
-            <p className="text-[10px] sm:text-xs font-semibold text-text-muted uppercase tracking-wider sm:tracking-widest mb-0.5">Total Estimasi Modal (HPP)</p>
-            <p className="text-xl sm:text-3xl font-display font-semibold text-text-ink tracking-tight">
-              {formatIDR(totalHPP)}
-            </p>
+        {/* Target Revenue & Profit Margin */}
+        <motion.div layout className="mt-6 sm:mt-8 pt-5 sm:pt-6 border-t border-border-subtle/80 flex flex-col gap-4">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+              <p className="text-[10px] sm:text-xs font-semibold text-text-muted uppercase tracking-wider sm:tracking-widest mb-0.5">Total Estimasi Modal (HPP)</p>
+              <p className="text-xl sm:text-3xl font-display font-semibold text-text-ink tracking-tight">
+                {formatIDR(totalHPP)}
+              </p>
+            </div>
+            
+            <div className="w-full sm:w-auto text-left sm:text-right">
+              <label className="text-[10px] sm:text-xs font-semibold text-text-muted uppercase tracking-wider sm:tracking-widest mb-1.5 block">Target Omset / Harga Jual</label>
+              <div className="relative inline-block w-full sm:w-48">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-text-muted">Rp</span>
+                <input 
+                  type="number" 
+                  min="0"
+                  placeholder="0"
+                  value={targetRevenue}
+                  onChange={(e) => setTargetRevenue(e.target.value)}
+                  className="w-full bg-surface-panel border border-border-subtle rounded-xl pl-9 pr-3 py-2 sm:py-2.5 text-sm sm:text-base font-mono font-semibold focus:outline-none focus:border-text-ink/30 transition-colors"
+                />
+              </div>
+            </div>
           </div>
-          <div className="bg-delta-cheap/10 text-delta-cheap border border-delta-cheap/20 px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-xl text-[10px] sm:text-xs font-semibold flex items-center gap-1.5 sm:gap-2 shrink-0">
-            <div className="w-1.5 sm:w-2 h-1.5 sm:h-2 rounded-full bg-delta-cheap animate-pulse" />
-            Harga Termurah
-          </div>
+          
+          <AnimatePresence>
+            {revenueVal > 0 && (
+              <motion.div 
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="overflow-hidden"
+              >
+                <div className={`p-3 sm:p-4 rounded-xl border ${margin < 30 ? 'bg-delta-expensive/5 border-delta-expensive/20' : 'bg-delta-cheap/5 border-delta-cheap/20'} flex items-center justify-between`}>
+                   <div>
+                     <p className={`text-xs sm:text-sm font-semibold ${margin < 30 ? 'text-delta-expensive' : 'text-delta-cheap'}`}>
+                       Estimasi Margin Kotor
+                     </p>
+                     {margin < 30 && <p className="text-[10px] text-delta-expensive/80 mt-0.5 font-medium">⚠️ Margin di bawah 30% berisiko rugi operasional.</p>}
+                   </div>
+                   
+                   {/* Odometer animation (FLIP-like via framer-motion key change) */}
+                   <div className={`text-xl sm:text-2xl font-display font-bold ${margin < 30 ? 'text-delta-expensive' : 'text-delta-cheap'} tabular-nums flex overflow-hidden h-7 sm:h-8 items-center`}>
+                     <motion.span
+                        key={margin.toFixed(1)}
+                        initial={{ y: 20, opacity: 0 }}
+                        animate={{ y: 0, opacity: 1 }}
+                        transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                     >
+                        {margin.toFixed(1)}%
+                     </motion.span>
+                   </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </motion.div>
 
         {/* Smart Shopping Routing Recommendations */}

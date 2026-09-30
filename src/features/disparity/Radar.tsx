@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
-import { turso } from "@/lib/turso";
 import { motion, AnimatePresence } from "motion/react";
 import { TrendingUp, ChevronDown, MapPin } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Sparkline, SparklinePoint } from "@/components/ui/Sparkline";
+import type { AppData } from "@/App";
 
 type CommodityData = {
   id: string;
@@ -20,88 +20,51 @@ type CommodityData = {
   history: SparklinePoint[];
 };
 
-export function DisparityRadar({ city = "DKI Jakarta" }: { city?: string }) {
-  const [data, setData] = useState<CommodityData[]>([]);
-  const [loading, setLoading] = useState(true);
+export function DisparityRadar({ city = "DKI Jakarta", data }: { city?: string, data: AppData }) {
+  const [groupedData, setGroupedData] = useState<CommodityData[]>([]);
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   useEffect(() => {
-    async function loadData() {
-      try {
-        setLoading(true);
-        const today = new Date().toISOString().split("T")[0];
-        
-        // Single concurrent network round-trip for maximum speed
-        const [commRes, priceRes, historyRes] = await Promise.all([
-          turso.execute("SELECT * FROM commodities"),
-          turso.execute({
-            sql: `
-              SELECT p.commodity_id, p.price, m.name as market_name, m.location 
-              FROM prices p 
-              JOIN markets m ON p.market_id = m.id 
-              WHERE p.date = ? AND (m.city = ? OR m.city IS NULL)
-            `,
-            args: [today, city]
-          }),
-          turso.execute({
-            sql: `
-              SELECT p.commodity_id, p.date, ROUND(AVG(p.price)) as price
-              FROM prices p
-              JOIN markets m ON p.market_id = m.id
-              WHERE (m.city = ? OR m.city IS NULL)
-              GROUP BY p.commodity_id, p.date
-              ORDER BY p.date ASC
-            `,
-            args: [city]
-          })
-        ]);
+    if (data.loading) return;
 
-        const commodities = commRes.rows;
+    const { commodities, todayPrices, historyPrices } = data;
 
-        // Group data
-        const grouped: CommodityData[] = commodities.map((c: any) => {
-          const mktPrices = priceRes.rows
-            .filter((p: any) => p.commodity_id === c.id)
-            .map((p: any) => ({
-              marketName: p.market_name as string,
-              location: p.location as string,
-              price: p.price as number
-            }))
-            .sort((a, b) => a.price - b.price); // Cheapest first
+    // Group data
+    const grouped: CommodityData[] = commodities.map((c: any) => {
+      const mktPrices = todayPrices
+        .filter((p: any) => p.commodity_id === c.id)
+        .map((p: any) => ({
+          marketName: p.market_name as string,
+          location: p.location as string,
+          price: p.price as number
+        }))
+        .sort((a, b) => a.price - b.price); // Cheapest first
 
-          const history = historyRes.rows
-            .filter((h: any) => h.commodity_id === c.id)
-            .map((h: any) => ({
-              date: h.date as string,
-              price: h.price as number
-            }));
+      const history = historyPrices
+        .filter((h: any) => h.commodity_id === c.id)
+        .map((h: any) => ({
+          date: h.date as string,
+          price: h.price as number
+        }));
 
-          return {
-            id: c.id as string,
-            name: c.name as string,
-            unit: c.unit as string,
-            category: c.category as string,
-            markets: mktPrices,
-            minPrice: mktPrices.length > 0 ? mktPrices[0].price : 0,
-            maxPrice: mktPrices.length > 0 ? mktPrices[mktPrices.length - 1].price : 0,
-            history
-          };
-        });
+      return {
+        id: c.id as string,
+        name: c.name as string,
+        unit: c.unit as string,
+        category: c.category as string,
+        markets: mktPrices,
+        minPrice: mktPrices.length > 0 ? mktPrices[0].price : 0,
+        maxPrice: mktPrices.length > 0 ? mktPrices[mktPrices.length - 1].price : 0,
+        history
+      };
+    });
 
-        setData(grouped);
-      } catch (error) {
-        console.error("Failed to load Turso data", error);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    loadData();
-  }, [city]);
+    setGroupedData(grouped);
+  }, [data]);
 
   const formatIDR = (val: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(val);
 
-  if (loading) {
+  if (data.loading) {
     return <div className="animate-pulse space-y-4">
       {[1,2,3].map(i => <div key={i} className="h-16 bg-border-subtle rounded-xl" />)}
     </div>;
@@ -109,7 +72,7 @@ export function DisparityRadar({ city = "DKI Jakarta" }: { city?: string }) {
 
   return (
     <div className="space-y-4">
-      {data.map((item) => {
+      {groupedData.map((item) => {
         const isExpanded = expandedId === item.id;
         const disparity = item.maxPrice - item.minPrice;
         
@@ -213,7 +176,7 @@ export function DisparityRadar({ city = "DKI Jakarta" }: { city?: string }) {
         );
       })}
 
-      {data.length === 0 && (
+      {groupedData.length === 0 && (
         <div className="text-center py-10 px-4 border-2 border-dashed border-border-subtle rounded-2xl bg-bg-canvas/40">
           <p className="text-xs sm:text-sm font-medium text-text-muted">
             Belum ada data pasar untuk wilayah {city}.
