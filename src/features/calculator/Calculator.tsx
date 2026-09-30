@@ -416,15 +416,52 @@ export function WartegCalculator({ data }: { data: AppData }) {
               </div>
             )}
 
-            <motion.button
-              whileHover={{ scale: 1.01 }}
-              whileTap={{ scale: 0.97 }}
-              onClick={handleShareWA}
-              className="w-full flex items-center justify-center gap-2 bg-[#25D366]/10 text-[#128C7E] hover:bg-[#25D366]/20 border border-[#25D366]/30 py-2.5 rounded-xl font-semibold text-xs sm:text-sm transition-colors"
-            >
-              <MessageCircle className="w-4 h-4" />
-              Kirim Daftar Belanja via WhatsApp
-            </motion.button>
+            {(() => {
+              const handleSaveLedger = () => {
+                if (cart.length === 0) return;
+                const raw = localStorage.getItem("warung_ledger");
+                let ledger: any[] = [];
+                if (raw) {
+                  try { ledger = JSON.parse(raw); } catch (e) {}
+                }
+                const entry = {
+                  id: crypto.randomUUID(),
+                  date: new Date().toISOString(),
+                  totalCost: totalHPP,
+                  targetRevenue: revenueVal,
+                  margin: margin,
+                  items: cart.length
+                };
+                ledger.push(entry);
+                localStorage.setItem("warung_ledger", JSON.stringify(ledger));
+                
+                alert("Data belanja dan margin hari ini berhasil dicatat ke Buku Kas!");
+              };
+
+              return (
+                <div className="flex flex-col sm:flex-row gap-2 w-full mt-2">
+                  <motion.button
+                    whileHover={{ scale: 1.01 }}
+                    whileTap={{ scale: 0.97 }}
+                    onClick={handleSaveLedger}
+                    className="flex-1 flex items-center justify-center gap-2 bg-text-ink text-surface-panel hover:bg-text-ink/90 border border-transparent py-2.5 rounded-xl font-semibold text-xs sm:text-sm transition-colors shadow-md"
+                  >
+                    <Save className="w-4 h-4" />
+                    Simpan ke Buku Kas
+                  </motion.button>
+
+                  <motion.button
+                    whileHover={{ scale: 1.01 }}
+                    whileTap={{ scale: 0.97 }}
+                    onClick={handleShareWA}
+                    className="flex-1 flex items-center justify-center gap-2 bg-[#25D366]/10 text-[#128C7E] hover:bg-[#25D366]/20 border border-[#25D366]/30 py-2.5 rounded-xl font-semibold text-xs sm:text-sm transition-colors"
+                  >
+                    <MessageCircle className="w-4 h-4" />
+                    Kirim ke WhatsApp
+                  </motion.button>
+                </div>
+              );
+            })()}
           </motion.div>
         )}
       </div>

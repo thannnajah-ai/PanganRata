@@ -3,9 +3,10 @@ import { Toaster } from 'sonner'
 import { motion, AnimatePresence } from 'motion/react'
 import { DisparityRadar } from '@/features/disparity/Radar'
 import { WartegCalculator } from '@/features/calculator/Calculator'
+import { Ledger } from '@/features/ledger/Ledger'
 import { LocationPicker } from '@/components/LocationPicker'
 import { turso } from '@/lib/turso'
-import { Radar, Calculator } from 'lucide-react'
+import { Radar, Calculator, BookOpen } from 'lucide-react'
 
 export type AppData = {
   commodities: any[];
@@ -18,7 +19,7 @@ function App() {
   const [selectedCity, setSelectedCity] = useState(() => {
     return localStorage.getItem("panganrata_city") || "DKI Jakarta";
   });
-  const [activeTab, setActiveTab] = useState<'radar' | 'calculator'>('radar');
+  const [activeTab, setActiveTab] = useState<'radar' | 'calculator' | 'ledger'>('radar');
 
   const [data, setData] = useState<AppData>({
     commodities: [],
@@ -120,7 +121,7 @@ function App() {
                 </div>
                 <DisparityRadar city={selectedCity} data={data} />
               </motion.section>
-            ) : (
+            ) : activeTab === 'calculator' ? (
               <motion.section
                 key="calculator"
                 initial={{ opacity: 0, x: 20 }}
@@ -129,6 +130,16 @@ function App() {
                 transition={{ duration: 0.2 }}
               >
                 <WartegCalculator data={data} />
+              </motion.section>
+            ) : (
+              <motion.section
+                key="ledger"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 20 }}
+                transition={{ duration: 0.2 }}
+              >
+                <Ledger />
               </motion.section>
             )}
           </AnimatePresence>
@@ -159,8 +170,19 @@ function App() {
             className={`relative flex-1 flex flex-col items-center gap-1 py-2 sm:py-2.5 rounded-xl text-xs font-semibold z-10 transition-colors ${activeTab === 'calculator' ? 'text-text-ink' : 'text-text-muted hover:text-text-ink/70'}`}
           >
             <Calculator className="w-5 h-5 sm:w-5 sm:h-5" />
-            <span className="text-[10px] sm:text-[11px]">Kalkulator HPP</span>
+            <span className="text-[10px] sm:text-[11px]">Kalkulator</span>
             {activeTab === 'calculator' && (
+              <motion.div layoutId="nav-bg" className="absolute inset-0 bg-bg-canvas border border-border-subtle rounded-xl -z-10 shadow-sm" transition={{ type: "spring", stiffness: 500, damping: 30 }} />
+            )}
+          </button>
+          
+          <button
+            onClick={() => setActiveTab('ledger')}
+            className={`relative flex-1 flex flex-col items-center gap-1 py-2 sm:py-2.5 rounded-xl text-xs font-semibold z-10 transition-colors ${activeTab === 'ledger' ? 'text-text-ink' : 'text-text-muted hover:text-text-ink/70'}`}
+          >
+            <BookOpen className="w-5 h-5 sm:w-5 sm:h-5" />
+            <span className="text-[10px] sm:text-[11px]">Buku Kas</span>
+            {activeTab === 'ledger' && (
               <motion.div layoutId="nav-bg" className="absolute inset-0 bg-bg-canvas border border-border-subtle rounded-xl -z-10 shadow-sm" transition={{ type: "spring", stiffness: 500, damping: 30 }} />
             )}
           </button>

@@ -20,15 +20,15 @@ const db = createClient({
 
 async function run() {
   console.log("Memulai sinkronisasi data...");
-  
+
   // 1. Eksekusi Schema
   const schemaSql = fs.readFileSync(path.join(process.cwd(), "scripts/schema.sql"), "utf-8");
   const statements = schemaSql.split(";").filter(stmt => stmt.trim() !== "");
-  
+
   for (const stmt of statements) {
     await db.execute(stmt);
   }
-  
+
   // Migrasi kolom city jika belum ada
   try {
     await db.execute("ALTER TABLE markets ADD COLUMN city TEXT DEFAULT 'DKI Jakarta'");
@@ -52,21 +52,21 @@ async function run() {
     { id: "mkt_sby_1", name: "Pasar Keputran", location: "Tegalsari", city: "Kota Surabaya" },
     { id: "mkt_sby_2", name: "Pasar Wonokromo", location: "Wonokromo", city: "Kota Surabaya" },
     { id: "mkt_sby_3", name: "Pasar Pabean", location: "Cantikan", city: "Kota Surabaya" },
-    
+
     // Kota Semarang
     { id: "mkt_smg_1", name: "Pasar Johar", location: "Semarang Tengah", city: "Kota Semarang" },
     { id: "mkt_smg_2", name: "Pasar Peterongan", location: "Semarang Selatan", city: "Kota Semarang" },
     { id: "mkt_smg_3", name: "Pasar Karangayu", location: "Semarang Barat", city: "Kota Semarang" },
-    
+
     // Kota Medan
     { id: "mkt_mdn_1", name: "Pasar Petisah", location: "Medan Petisah", city: "Kota Medan" },
-    
+
     // Kota Yogyakarta
     { id: "mkt_ygk_1", name: "Pasar Beringharjo", location: "Gondomanan", city: "Kota Yogyakarta" },
-    
+
     // Kota Makassar
     { id: "mkt_mks_1", name: "Pasar Terong", location: "Bontoala", city: "Kota Makassar" },
-    
+
     // Kota Denpasar
     { id: "mkt_dps_1", name: "Pasar Badung", location: "Denpasar Barat", city: "Kota Denpasar" }
   ];
@@ -77,7 +77,7 @@ async function run() {
     { id: "com_12", name: "Gula Pasir", unit: "Kg", category: "Pokok" },
     { id: "com_13", name: "Minyak Goreng Curah", unit: "Liter", category: "Pokok" },
     { id: "com_14", name: "Tepung Terigu", unit: "Kg", category: "Pokok" },
-    
+
     // SAYUR
     { id: "com_2", name: "Cabai Merah Keriting", unit: "Kg", category: "Sayur" },
     { id: "com_21", name: "Cabai Rawit Merah", unit: "Kg", category: "Sayur" },
@@ -85,7 +85,7 @@ async function run() {
     { id: "com_31", name: "Bawang Putih", unit: "Kg", category: "Sayur" },
     { id: "com_32", name: "Tomat Merah", unit: "Kg", category: "Sayur" },
     { id: "com_33", name: "Sayur Kol / Kubis", unit: "Kg", category: "Sayur" },
-    
+
     // PROTEIN
     { id: "com_4", name: "Daging Ayam Ras", unit: "Ekor", category: "Protein" },
     { id: "com_41", name: "Daging Sapi", unit: "Kg", category: "Protein" },
@@ -96,7 +96,7 @@ async function run() {
   ];
 
   console.log("Menyuntikkan data master pasar dan komoditas per kota...");
-  
+
   for (const m of markets) {
     await db.execute({
       sql: "INSERT INTO markets (id, name, location, city) VALUES (?, ?, ?, ?) ON CONFLICT(id) DO UPDATE SET city=excluded.city, name=excluded.name, location=excluded.location",
@@ -112,25 +112,25 @@ async function run() {
   }
 
   const cityBasePrices: Record<string, Record<string, number>> = {
-    "DKI Jakarta": { 
+    "DKI Jakarta": {
       "com_1": 14000, "com_11": 16000, "com_12": 18000, "com_13": 15000, "com_14": 11000,
       "com_2": 65000, "com_21": 70000, "com_3": 45000, "com_31": 42000, "com_32": 18000, "com_33": 12000,
-      "com_4": 38000, "com_41": 140000, "com_5": 28000, "com_51": 25000, "com_52": 2000, "com_53": 5000 
+      "com_4": 38000, "com_41": 140000, "com_5": 28000, "com_51": 25000, "com_52": 2000, "com_53": 5000
     },
-    "Kota Bandung": { 
+    "Kota Bandung": {
       "com_1": 13500, "com_11": 15500, "com_12": 17500, "com_13": 14500, "com_14": 10500,
       "com_2": 58000, "com_21": 65000, "com_3": 42000, "com_31": 40000, "com_32": 16000, "com_33": 10000,
-      "com_4": 36500, "com_41": 135000, "com_5": 27500, "com_51": 24000, "com_52": 1800, "com_53": 4500 
+      "com_4": 36500, "com_41": 135000, "com_5": 27500, "com_51": 24000, "com_52": 1800, "com_53": 4500
     },
-    "Kota Surabaya": { 
+    "Kota Surabaya": {
       "com_1": 13800, "com_11": 15800, "com_12": 17800, "com_13": 14800, "com_14": 10800,
       "com_2": 62000, "com_21": 68000, "com_3": 40000, "com_31": 39000, "com_32": 17000, "com_33": 11000,
-      "com_4": 35000, "com_41": 130000, "com_5": 27000, "com_51": 23000, "com_52": 1500, "com_53": 4000 
+      "com_4": 35000, "com_41": 130000, "com_5": 27000, "com_51": 23000, "com_52": 1500, "com_53": 4000
     },
-    "Kota Semarang": { 
+    "Kota Semarang": {
       "com_1": 13600, "com_11": 15600, "com_12": 17600, "com_13": 14600, "com_14": 10600,
       "com_2": 60000, "com_21": 66000, "com_3": 41000, "com_31": 39500, "com_32": 16500, "com_33": 10500,
-      "com_4": 36000, "com_41": 132000, "com_5": 27200, "com_51": 23500, "com_52": 1600, "com_53": 4200 
+      "com_4": 36000, "com_41": 132000, "com_5": 27200, "com_51": 23500, "com_52": 1600, "com_53": 4200
     },
     "Kota Medan": {
       "com_1": 13900, "com_11": 15900, "com_12": 17900, "com_13": 14900, "com_14": 10900,
@@ -158,12 +158,12 @@ async function run() {
 
   // Generate 14 days of historical daily prices (from 13 days ago to today)
   const batchStmts = [];
-  
+
   for (let d = 13; d >= 0; d--) {
     const targetDate = new Date();
     targetDate.setDate(targetDate.getDate() - d);
     const dateStr = targetDate.toISOString().split("T")[0];
-    
+
     // Wave drift factor over 14 days
     const wave = Math.sin((13 - d) * 0.4);
 
