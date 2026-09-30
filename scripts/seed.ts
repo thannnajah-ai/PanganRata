@@ -157,6 +157,8 @@ async function run() {
   console.log("Menyinkronkan harga 14 hari ke belakang untuk grafik Sparkline...");
 
   // Generate 14 days of historical daily prices (from 13 days ago to today)
+  const batchStmts = [];
+  
   for (let d = 13; d >= 0; d--) {
     const targetDate = new Date();
     targetDate.setDate(targetDate.getDate() - d);
@@ -172,7 +174,7 @@ async function run() {
         const price = (baseMap[c.id] || 15000) + variance;
         const id = `${c.id}_${m.id}_${dateStr}`;
 
-        await db.execute({
+        batchStmts.push({
           sql: `
             INSERT INTO prices (id, commodity_id, market_id, price, date) 
             VALUES (?, ?, ?, ?, ?)
@@ -182,6 +184,14 @@ async function run() {
         });
       }
     }
+  }
+
+  // Execute in chunks of 500
+  const chunkSize = 500;
+  for (let i = 0; i < batchStmts.length; i += chunkSize) {
+    const chunk = batchStmts.slice(i, i + chunkSize);
+    await db.batch(chunk, "write");
+    console.log(`Batched ${i + chunk.length}/${batchStmts.length} baris...`);
   }
 
   console.log("✅ Data harga 14 hari berhasil disinkronkan ke Turso!");
