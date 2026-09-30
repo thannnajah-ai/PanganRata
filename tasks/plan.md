@@ -29,5 +29,10 @@
 - [x] Rekomendasi Rute Belanja Hemat (*Smart Shopping Routing*: komparasi *split market* vs *single market* + nominal penghematan).
 - [x] Pengujian unit otomatis via `node:test` (`npm run test:unit`) lolos 100%.
 
+## 6. Business Features & UX Polish (Tahap Transformasi Native) [SELESAI]
+- [x] **Tab Navigation & Lift State Up**: Transformasi App.tsx menjadi arsitektur Bottom Navigation dengan pemusatan pemanggilan data agar mengurangi beban _serverless reads_ secara drastis.
+- [x] **Persistent Cart & Swipe-to-Delete**: Interaksi native melalui gerakan usap (swipe) untuk menghapus item keranjang kalkulator + integrasi localStorage untuk pengalaman yang tangguh.
+- [x] **Profit Margin Tracker**: Penambahan estimasi _Gross Profit Margin_ dengan limitasi indikator peringatan bahaya di bawah 30% dan animasi *Odometer* dinamis menggunakan Framer Motion FLIP.
+
 ## Status Proyek
-Semua kriteria sukses dari `SPEC-panganrata.md` telah terpenuhi dan diverifikasi secara menyeluruh.
+Semua inisiatif fitur lanjutan (Native Transformation & Business Tracking) dari `SPEC-panganrata.md` telah terpenuhi dengan prinsip efisiensi maksimal (Ponytail), dan keseluruhan build diverifikasi 100% _green_ pada branch `main`.
