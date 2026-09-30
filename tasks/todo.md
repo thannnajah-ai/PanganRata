@@ -1,0 +1,24 @@
+- [ ] Task: Project Initialization (Foundation)
+  - Acceptance: Aplikasi React (Vite) berjalan, Tailwind berfungsi, warna palet khusus tersedia.
+  - Verify: Jalankan `npm run dev` dan cek tampilan latar belakang web.
+  - Files: `package.json`, `index.css`, `App.tsx`
+- [ ] Task: Setup Koneksi Turso
+  - Acceptance: Modul klien Turso dapat membaca URL dan Token dari `.env`.
+  - Verify: Tidak ada error kompilasi pada modul klien.
+  - Files: `src/lib/turso.ts`, `.env`
+- [ ] Task: Core UI Components (Emil-Style)
+  - Acceptance: Tombol bisa membal (*spring bounce*) dan daftar akordeon bisa membuka/tutup tanpa kedip layout.
+  - Verify: Tes interaksi klik manual di browser.
+  - Files: `src/components/ui/Button.tsx`, `src/components/motion/Accordion.tsx`
+- [ ] Task: Data Integration (BPS Fetcher & Turso Schema)
+  - Acceptance: Skema tabel SQLite siap dan ada skrip penarik data (memakai *mock* sementara menunggu email BPS).
+  - Verify: Eksekusi skrip `node scripts/seed.js` berhasil memasukkan data ke Turso.
+  - Files: `scripts/schema.sql`, `scripts/seed.js`
+- [ ] Task: Fitur Disparity Radar
+  - Acceptance: Daftar harga pasar tampil dengan akurat sesuai data Turso.
+  - Verify: Layar menampilkan daftar komoditas dari yang termurah.
+  - Files: `src/features/disparity/Radar.tsx`
+- [ ] Task: Fitur Warteg Calculator
+  - Acceptance: Pengguna bisa memasukkan berat bahan baku dan melihat total perkiraan belanja.
+  - Verify: Input "5" Kg Beras, dan sistem menampilkan hasil kali harga beras termurah di DB.
+  - Files: `src/features/calculator/WartegMath.tsx`

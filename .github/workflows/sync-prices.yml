@@ -1,0 +1,31 @@
+name: Daily Food Price Sync
+
+on:
+  schedule:
+    # Berjalan setiap pukul 23:00 UTC (06:00 WIB pagi) setiap hari
+    - cron: '0 23 * * *'
+  workflow_dispatch: # Memungkinkan eksekusi manual via tombol 'Run workflow' di GitHub Actions
+
+jobs:
+  sync-prices:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run price synchronization
+        env:
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+          BPS_API_KEY: ${{ secrets.BPS_API_KEY }}
+        run: npx tsx scripts/fetch-bps.ts
