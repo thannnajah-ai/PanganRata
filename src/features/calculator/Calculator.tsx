@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { Plus, X, Calculator as CalcIcon, Navigation, Store, Sparkles } from "lucide-react";
+import { Plus, X, Calculator as CalcIcon, Navigation, Store, Sparkles, MessageCircle } from "lucide-react";
 import type { AppData } from "@/App";
 
 import { 
@@ -86,6 +86,28 @@ export function WartegCalculator({ data }: { data: AppData }) {
 
   const revenueVal = parseFloat(targetRevenue) || 0;
   const margin = revenueVal > 0 ? ((revenueVal - totalHPP) / revenueVal) * 100 : 0;
+
+  const handleShareWA = () => {
+    if (!routing || routing.splitMarkets.length === 0) return;
+    
+    let text = `🛒 *Daftar Belanja Warteg*\nEstimasi Modal (HPP): ${formatIDR(totalHPP)}\n\n`;
+    
+    routing.splitMarkets.forEach(m => {
+      text += `📍 *Beli di ${m.marketName}* (${formatIDR(m.subtotal)}):\n`;
+      m.items.forEach(i => {
+        text += `- ${i.name}: ${i.qty} ${i.unit}\n`;
+      });
+      text += `\n`;
+    });
+    
+    if (revenueVal > 0) {
+      text += `🎯 *Target Omset*: ${formatIDR(revenueVal)}\n`;
+      text += `📈 *Estimasi Margin*: ${margin.toFixed(1)}%\n`;
+    }
+    
+    const encoded = encodeURIComponent(text.trim());
+    window.open(`https://wa.me/?text=${encoded}`, '_blank');
+  };
 
   if (data.loading) return null;
 
@@ -305,7 +327,7 @@ export function WartegCalculator({ data }: { data: AppData }) {
 
             {/* Strategy Comparison Card */}
             {routing.bestSingle && (
-              <div className="bg-surface-panel p-3.5 rounded-xl border border-border-subtle flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+              <div className="bg-surface-panel p-3.5 rounded-xl border border-border-subtle flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs mb-4">
                 <div>
                   <div className="flex items-center gap-1.5 text-text-muted font-medium">
                     <span>Opsi 1 Tempat:</span>
@@ -324,6 +346,16 @@ export function WartegCalculator({ data }: { data: AppData }) {
                 </div>
               </div>
             )}
+
+            <motion.button
+              whileHover={{ scale: 1.01 }}
+              whileTap={{ scale: 0.97 }}
+              onClick={handleShareWA}
+              className="w-full flex items-center justify-center gap-2 bg-[#25D366]/10 text-[#128C7E] hover:bg-[#25D366]/20 border border-[#25D366]/30 py-2.5 rounded-xl font-semibold text-xs sm:text-sm transition-colors"
+            >
+              <MessageCircle className="w-4 h-4" />
+              Kirim Daftar Belanja via WhatsApp
+            </motion.button>
           </motion.div>
         )}
       </div>
