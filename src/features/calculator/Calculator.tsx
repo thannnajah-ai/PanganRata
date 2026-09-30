@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { Plus, X, Calculator as CalcIcon, Navigation, Store, Sparkles, MessageCircle } from "lucide-react";
+import { Plus, X, Calculator as CalcIcon, Navigation, Store, Sparkles, MessageCircle, Save } from "lucide-react";
 import type { AppData } from "@/App";
 
 import { 
@@ -22,10 +22,21 @@ export function WartegCalculator({ data }: { data: AppData }) {
     return [];
   });
   const [targetRevenue, setTargetRevenue] = useState<string>("");
+  const [presets, setPresets] = useState<Record<string, CartItem[]>>(() => {
+    try {
+      const saved = localStorage.getItem("panganrata_presets");
+      if (saved) return JSON.parse(saved);
+    } catch (e) {}
+    return {};
+  });
 
   useEffect(() => {
     localStorage.setItem("panganrata_cart", JSON.stringify(cart));
   }, [cart]);
+
+  useEffect(() => {
+    localStorage.setItem("panganrata_presets", JSON.stringify(presets));
+  }, [presets]);
 
   useEffect(() => {
     if (data.loading) return;
@@ -77,6 +88,29 @@ export function WartegCalculator({ data }: { data: AppData }) {
 
   const updateRow = (uid: string, field: 'commodityId' | 'qty', value: any) => {
     setCart((prev) => prev.map(c => c.uid === uid ? { ...c, [field]: value } : c));
+  };
+
+  const savePreset = () => {
+    if (cart.length === 0) return;
+    const name = window.prompt("Beri nama template belanja ini (contoh: 'Menu Senin'):");
+    if (!name || name.trim() === "") return;
+    setPresets(prev => ({ ...prev, [name.trim()]: cart }));
+  };
+
+  const loadPreset = (name: string) => {
+    if (presets[name]) {
+      setCart(presets[name]);
+    }
+  };
+  
+  const deletePreset = (name: string) => {
+    if (window.confirm(`Hapus template '${name}'?`)) {
+      setPresets(prev => {
+        const next = { ...prev };
+        delete next[name];
+        return next;
+      });
+    }
   };
 
   const totalHPP = useMemo(() => computeTotalHPP(cart, catalog), [cart, catalog]);
@@ -209,16 +243,51 @@ export function WartegCalculator({ data }: { data: AppData }) {
           )}
         </div>
 
-        <div className="mt-4 sm:mt-6">
-          <motion.button
-            whileHover={{ scale: 1.01 }}
-            whileTap={{ scale: 0.97 }}
-            onClick={addRow}
-            className="flex items-center justify-center gap-2 w-full py-2.5 sm:py-3 bg-bg-canvas border border-border-subtle text-text-ink rounded-xl sm:rounded-2xl font-medium text-xs sm:text-sm hover:border-text-ink/20 hover:shadow-sm transition-all"
-          >
-            <Plus className="w-4 h-4" />
-            Tambah Bahan
-          </motion.button>
+        <div className="mt-4 sm:mt-6 flex flex-col gap-3">
+          <div className="flex flex-col sm:flex-row gap-2">
+            <motion.button
+              whileHover={{ scale: 1.01 }}
+              whileTap={{ scale: 0.97 }}
+              onClick={addRow}
+              className="flex-1 flex items-center justify-center gap-2 py-2.5 sm:py-3 bg-bg-canvas border border-border-subtle text-text-ink rounded-xl sm:rounded-2xl font-medium text-xs sm:text-sm hover:border-text-ink/20 hover:shadow-sm transition-all"
+            >
+              <Plus className="w-4 h-4" />
+              Tambah Bahan
+            </motion.button>
+
+            {cart.length > 0 && (
+              <motion.button
+                whileHover={{ scale: 1.01 }}
+                whileTap={{ scale: 0.97 }}
+                onClick={savePreset}
+                title="Simpan sebagai template"
+                className="flex-none flex items-center justify-center p-2.5 sm:p-3 bg-surface-panel border border-border-subtle text-text-muted hover:text-text-ink rounded-xl sm:rounded-2xl hover:border-text-ink/20 transition-all"
+              >
+                <Save className="w-4 h-4 sm:w-5 sm:h-5" />
+              </motion.button>
+            )}
+          </div>
+          
+          {Object.keys(presets).length > 0 && (
+            <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+              {Object.keys(presets).map(presetName => (
+                <div key={presetName} className="flex-none inline-flex items-center gap-1 bg-surface-panel border border-border-subtle rounded-lg px-2.5 py-1.5 shadow-sm">
+                  <button 
+                    onClick={() => loadPreset(presetName)}
+                    className="text-[11px] font-semibold text-text-ink whitespace-nowrap hover:text-accent-grain transition-colors"
+                  >
+                    {presetName}
+                  </button>
+                  <button 
+                    onClick={() => deletePreset(presetName)}
+                    className="text-text-muted hover:text-delta-expensive ml-1 transition-colors"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Target Revenue & Profit Margin */}
