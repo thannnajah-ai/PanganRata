@@ -70,111 +70,128 @@ export function DisparityRadar({ city = "DKI Jakarta", data }: { city?: string, 
     </div>;
   }
 
+  const categories = groupedData.reduce((acc, item) => {
+    if (!acc[item.category]) acc[item.category] = [];
+    acc[item.category].push(item);
+    return acc;
+  }, {} as Record<string, CommodityData[]>);
+
   return (
-    <div className="space-y-4">
-      {groupedData.map((item) => {
-        const isExpanded = expandedId === item.id;
-        const disparity = item.maxPrice - item.minPrice;
-        
-        return (
-          <motion.div 
-            key={item.id}
-            layout
-            onClick={() => setExpandedId(isExpanded ? null : item.id)}
-            className="group relative bg-surface-panel/50 backdrop-blur-sm border border-border-subtle rounded-2xl overflow-hidden cursor-pointer shadow-sm hover:shadow-md transition-all duration-300"
-          >
-            {/* Subtle hover gradient background */}
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-border-subtle/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
-            
-            {/* Header / Summary Row */}
-            <motion.div layout className="relative p-3.5 sm:p-6 flex items-center justify-between z-10 gap-2.5">
-              <div className="min-w-0 flex-1">
-                <h3 className="font-display font-semibold text-base sm:text-xl text-text-ink leading-snug truncate sm:overflow-visible sm:whitespace-normal">
-                  {item.name}
-                </h3>
-                <p className="text-text-muted text-[10px] sm:text-xs font-semibold uppercase tracking-wider sm:tracking-widest mt-0.5">
-                  {item.category} <span className="opacity-50 mx-0.5 sm:mx-1">•</span> {item.unit}
-                </p>
-              </div>
+    <div className="space-y-8">
+      {Object.entries(categories).map(([catName, items]) => (
+        <div key={catName} className="space-y-3 sm:space-y-4">
+          <div className="flex items-center gap-3">
+            <h2 className="text-xs sm:text-sm font-semibold text-text-muted uppercase tracking-widest">{catName}</h2>
+            <div className="h-px bg-border-subtle flex-1" />
+          </div>
+          
+          <div className="space-y-3 sm:space-y-4">
+            {items.map((item) => {
+              const isExpanded = expandedId === item.id;
+              const disparity = item.maxPrice - item.minPrice;
               
-              <div className="text-right flex items-center gap-2.5 sm:gap-5 shrink-0">
-                <div>
-                  <p className="text-sm sm:text-lg font-semibold font-mono text-text-ink tracking-tight whitespace-nowrap">
-                    {formatIDR(item.minPrice)}
-                  </p>
-                  {disparity > 0 ? (
-                    <p className="text-[10px] sm:text-xs text-delta-expensive flex items-center justify-end gap-0.5 sm:gap-1 font-medium mt-0.5 whitespace-nowrap">
-                      <TrendingUp className="w-3 h-3 stroke-[2.5]" />
-                      +{formatIDR(disparity)} gap
-                    </p>
-                  ) : (
-                    <p className="text-[10px] sm:text-xs text-text-muted flex items-center justify-end gap-1 font-medium mt-0.5 whitespace-nowrap">
-                      Harga Stabil
-                    </p>
-                  )}
-                </div>
-                <motion.div
-                  animate={{ rotate: isExpanded ? 180 : 0 }}
-                  transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                  className="bg-bg-canvas p-1 sm:p-1.5 rounded-full border border-border-subtle group-hover:border-text-muted/30 transition-colors"
+              return (
+                <motion.div 
+                  key={item.id}
+                  layout
+                  onClick={() => setExpandedId(isExpanded ? null : item.id)}
+                  className="group relative bg-surface-panel/50 backdrop-blur-sm border border-border-subtle rounded-2xl overflow-hidden cursor-pointer shadow-sm hover:shadow-md transition-all duration-300"
                 >
-                  <ChevronDown className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-text-ink" />
-                </motion.div>
-              </div>
-            </motion.div>
-
-            {/* Expanded Content using FLIP Layout morphing */}
-            <AnimatePresence initial={false}>
-              {isExpanded && (
-                <motion.div
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: "auto", opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                  className="relative z-10"
-                >
-                  <div className="px-3.5 sm:px-6 pb-4 sm:pb-6 pt-1">
-                    <div className="h-px w-full bg-gradient-to-r from-transparent via-border-subtle to-transparent mb-4 sm:mb-5" />
+                  {/* Subtle hover gradient background */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-border-subtle/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+                  
+                  {/* Header / Summary Row */}
+                  <motion.div layout className="relative p-3.5 sm:p-6 flex items-center justify-between z-10 gap-2.5">
+                    <div className="min-w-0 flex-1">
+                      <h3 className="font-display font-semibold text-base sm:text-xl text-text-ink leading-snug truncate sm:overflow-visible sm:whitespace-normal">
+                        {item.name}
+                      </h3>
+                      <p className="text-text-muted text-[10px] sm:text-xs font-semibold uppercase tracking-wider sm:tracking-widest mt-0.5">
+                        {item.category} <span className="opacity-50 mx-0.5 sm:mx-1">•</span> {item.unit}
+                      </p>
+                    </div>
                     
-                    {/* Interactive 14-Day Sparkline Scrubber */}
-                    {item.history.length > 0 && (
-                      <div className="mb-5 bg-surface-panel/90 p-3 sm:p-4 rounded-xl border border-border-subtle/80 shadow-2xs">
-                        <Sparkline data={item.history} height={64} />
+                    <div className="text-right flex items-center gap-2.5 sm:gap-5 shrink-0">
+                      <div>
+                        <p className="text-sm sm:text-lg font-semibold font-mono text-text-ink tracking-tight whitespace-nowrap">
+                          {formatIDR(item.minPrice)}
+                        </p>
+                        {disparity > 0 ? (
+                          <p className="text-[10px] sm:text-xs text-delta-expensive flex items-center justify-end gap-0.5 sm:gap-1 font-medium mt-0.5 whitespace-nowrap">
+                            <TrendingUp className="w-3 h-3 stroke-[2.5]" />
+                            +{formatIDR(disparity)} gap
+                          </p>
+                        ) : (
+                          <p className="text-[10px] sm:text-xs text-text-muted flex items-center justify-end gap-1 font-medium mt-0.5 whitespace-nowrap">
+                            Harga Stabil
+                          </p>
+                        )}
                       </div>
-                    )}
+                      <motion.div
+                        animate={{ rotate: isExpanded ? 180 : 0 }}
+                        transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                        className="bg-bg-canvas p-1 sm:p-1.5 rounded-full border border-border-subtle group-hover:border-text-muted/30 transition-colors"
+                      >
+                        <ChevronDown className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-text-ink" />
+                      </motion.div>
+                    </div>
+                  </motion.div>
 
-                    <p className="text-[10px] sm:text-[11px] font-semibold text-text-muted mb-2.5 sm:mb-3 uppercase tracking-wider sm:tracking-widest">
-                      Perbandingan Harga Pasar Induk
-                    </p>
-                    <ul className="space-y-2 sm:space-y-2.5">
-                      {item.markets.map((m, idx) => (
-                        <li key={idx} className="flex justify-between items-center text-xs sm:text-sm bg-bg-canvas/50 px-3 py-2.5 sm:px-4 sm:py-3 rounded-xl border border-border-subtle/50 gap-2">
-                          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
-                            <div className="bg-surface-panel p-1.5 rounded-md shadow-sm border border-border-subtle/50 shrink-0">
-                              <MapPin className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-text-muted" />
+                  {/* Expanded Content using FLIP Layout morphing */}
+                  <AnimatePresence initial={false}>
+                    {isExpanded && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                        className="relative z-10"
+                      >
+                        <div className="px-3.5 sm:px-6 pb-4 sm:pb-6 pt-1">
+                          <div className="h-px w-full bg-gradient-to-r from-transparent via-border-subtle to-transparent mb-4 sm:mb-5" />
+                          
+                          {/* Interactive 14-Day Sparkline Scrubber */}
+                          {item.history.length > 0 && (
+                            <div className="mb-5 bg-surface-panel/90 p-3 sm:p-4 rounded-xl border border-border-subtle/80 shadow-2xs">
+                              <Sparkline data={item.history} height={64} />
                             </div>
-                            <div className="min-w-0">
-                              <span className="font-semibold text-text-ink block truncate">{m.marketName}</span>
-                              <span className="text-[10px] sm:text-[11px] text-text-muted tracking-wide font-medium block truncate">{m.location}</span>
-                            </div>
-                          </div>
-                          <span className={cn(
-                            "font-mono font-medium tracking-tight shrink-0 whitespace-nowrap text-xs sm:text-sm",
-                            idx === 0 ? "text-delta-cheap bg-delta-cheap/10 px-1.5 sm:px-2 py-0.5 rounded" : 
-                            (idx === item.markets.length - 1 ? "text-delta-expensive bg-delta-expensive/10 px-1.5 sm:px-2 py-0.5 rounded" : "text-text-ink")
-                          )}>
-                            {formatIDR(m.price)}
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
+                          )}
+
+                          <p className="text-[10px] sm:text-[11px] font-semibold text-text-muted mb-2.5 sm:mb-3 uppercase tracking-wider sm:tracking-widest">
+                            Perbandingan Harga Pasar Induk
+                          </p>
+                          <ul className="space-y-2 sm:space-y-2.5">
+                            {item.markets.map((m, idx) => (
+                              <li key={idx} className="flex justify-between items-center text-xs sm:text-sm bg-bg-canvas/50 px-3 py-2.5 sm:px-4 sm:py-3 rounded-xl border border-border-subtle/50 gap-2">
+                                <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+                                  <div className="bg-surface-panel p-1.5 rounded-md shadow-sm border border-border-subtle/50 shrink-0">
+                                    <MapPin className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-text-muted" />
+                                  </div>
+                                  <div className="min-w-0">
+                                    <span className="font-semibold text-text-ink block truncate">{m.marketName}</span>
+                                    <span className="text-[10px] sm:text-[11px] text-text-muted tracking-wide font-medium block truncate">{m.location}</span>
+                                  </div>
+                                </div>
+                                <span className={cn(
+                                  "font-mono font-medium tracking-tight shrink-0 whitespace-nowrap text-xs sm:text-sm",
+                                  idx === 0 ? "text-delta-cheap bg-delta-cheap/10 px-1.5 sm:px-2 py-0.5 rounded" : 
+                                  (idx === item.markets.length - 1 ? "text-delta-expensive bg-delta-expensive/10 px-1.5 sm:px-2 py-0.5 rounded" : "text-text-ink")
+                                )}>
+                                  {formatIDR(m.price)}
+                                </span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </motion.div>
-              )}
-            </AnimatePresence>
-          </motion.div>
-        );
-      })}
+              );
+            })}
+          </div>
+        </div>
+      ))}
 
       {groupedData.length === 0 && (
         <div className="text-center py-10 px-4 border-2 border-dashed border-border-subtle rounded-2xl bg-bg-canvas/40">
@@ -182,7 +199,7 @@ export function DisparityRadar({ city = "DKI Jakarta", data }: { city?: string, 
             Belum ada data pasar untuk wilayah {city}.
           </p>
           <p className="text-[11px] text-text-muted/70 mt-1">
-            Silakan pilih kota lain seperti DKI Jakarta, Kota Bandung, atau Kota Surabaya.
+            Silakan pilih kota lain seperti DKI Jakarta, Kota Bandung, Kota Surabaya, atau Kota Semarang.
           </p>
         </div>
       )}

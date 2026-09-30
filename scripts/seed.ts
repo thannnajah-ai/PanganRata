@@ -51,15 +51,48 @@ async function run() {
     // Kota Surabaya
     { id: "mkt_sby_1", name: "Pasar Keputran", location: "Tegalsari", city: "Kota Surabaya" },
     { id: "mkt_sby_2", name: "Pasar Wonokromo", location: "Wonokromo", city: "Kota Surabaya" },
-    { id: "mkt_sby_3", name: "Pasar Pabean", location: "Cantikan", city: "Kota Surabaya" }
+    { id: "mkt_sby_3", name: "Pasar Pabean", location: "Cantikan", city: "Kota Surabaya" },
+    
+    // Kota Semarang
+    { id: "mkt_smg_1", name: "Pasar Johar", location: "Semarang Tengah", city: "Kota Semarang" },
+    { id: "mkt_smg_2", name: "Pasar Peterongan", location: "Semarang Selatan", city: "Kota Semarang" },
+    { id: "mkt_smg_3", name: "Pasar Karangayu", location: "Semarang Barat", city: "Kota Semarang" },
+    
+    // Kota Medan
+    { id: "mkt_mdn_1", name: "Pasar Petisah", location: "Medan Petisah", city: "Kota Medan" },
+    
+    // Kota Yogyakarta
+    { id: "mkt_ygk_1", name: "Pasar Beringharjo", location: "Gondomanan", city: "Kota Yogyakarta" },
+    
+    // Kota Makassar
+    { id: "mkt_mks_1", name: "Pasar Terong", location: "Bontoala", city: "Kota Makassar" },
+    
+    // Kota Denpasar
+    { id: "mkt_dps_1", name: "Pasar Badung", location: "Denpasar Barat", city: "Kota Denpasar" }
   ];
-
   const commodities = [
+    // POKOK
     { id: "com_1", name: "Beras Medium", unit: "Kg", category: "Pokok" },
+    { id: "com_11", name: "Beras Premium", unit: "Kg", category: "Pokok" },
+    { id: "com_12", name: "Gula Pasir", unit: "Kg", category: "Pokok" },
+    { id: "com_13", name: "Minyak Goreng Curah", unit: "Liter", category: "Pokok" },
+    { id: "com_14", name: "Tepung Terigu", unit: "Kg", category: "Pokok" },
+    
+    // SAYUR
     { id: "com_2", name: "Cabai Merah Keriting", unit: "Kg", category: "Sayur" },
+    { id: "com_21", name: "Cabai Rawit Merah", unit: "Kg", category: "Sayur" },
     { id: "com_3", name: "Bawang Merah", unit: "Kg", category: "Sayur" },
+    { id: "com_31", name: "Bawang Putih", unit: "Kg", category: "Sayur" },
+    { id: "com_32", name: "Tomat Merah", unit: "Kg", category: "Sayur" },
+    { id: "com_33", name: "Sayur Kol / Kubis", unit: "Kg", category: "Sayur" },
+    
+    // PROTEIN
     { id: "com_4", name: "Daging Ayam Ras", unit: "Ekor", category: "Protein" },
-    { id: "com_5", name: "Telur Ayam Ras", unit: "Kg", category: "Protein" }
+    { id: "com_41", name: "Daging Sapi", unit: "Kg", category: "Protein" },
+    { id: "com_5", name: "Telur Ayam Ras", unit: "Kg", category: "Protein" },
+    { id: "com_51", name: "Ikan Lele", unit: "Kg", category: "Protein" },
+    { id: "com_52", name: "Tahu Putih", unit: "Potong", category: "Protein" },
+    { id: "com_53", name: "Tempe", unit: "Papan", category: "Protein" }
   ];
 
   console.log("Menyuntikkan data master pasar dan komoditas per kota...");
@@ -79,9 +112,46 @@ async function run() {
   }
 
   const cityBasePrices: Record<string, Record<string, number>> = {
-    "DKI Jakarta": { "com_1": 14000, "com_2": 65000, "com_3": 45000, "com_4": 38000, "com_5": 28000 },
-    "Kota Bandung": { "com_1": 13500, "com_2": 58000, "com_3": 42000, "com_4": 36500, "com_5": 27500 },
-    "Kota Surabaya": { "com_1": 13800, "com_2": 62000, "com_3": 40000, "com_4": 35000, "com_5": 27000 }
+    "DKI Jakarta": { 
+      "com_1": 14000, "com_11": 16000, "com_12": 18000, "com_13": 15000, "com_14": 11000,
+      "com_2": 65000, "com_21": 70000, "com_3": 45000, "com_31": 42000, "com_32": 18000, "com_33": 12000,
+      "com_4": 38000, "com_41": 140000, "com_5": 28000, "com_51": 25000, "com_52": 2000, "com_53": 5000 
+    },
+    "Kota Bandung": { 
+      "com_1": 13500, "com_11": 15500, "com_12": 17500, "com_13": 14500, "com_14": 10500,
+      "com_2": 58000, "com_21": 65000, "com_3": 42000, "com_31": 40000, "com_32": 16000, "com_33": 10000,
+      "com_4": 36500, "com_41": 135000, "com_5": 27500, "com_51": 24000, "com_52": 1800, "com_53": 4500 
+    },
+    "Kota Surabaya": { 
+      "com_1": 13800, "com_11": 15800, "com_12": 17800, "com_13": 14800, "com_14": 10800,
+      "com_2": 62000, "com_21": 68000, "com_3": 40000, "com_31": 39000, "com_32": 17000, "com_33": 11000,
+      "com_4": 35000, "com_41": 130000, "com_5": 27000, "com_51": 23000, "com_52": 1500, "com_53": 4000 
+    },
+    "Kota Semarang": { 
+      "com_1": 13600, "com_11": 15600, "com_12": 17600, "com_13": 14600, "com_14": 10600,
+      "com_2": 60000, "com_21": 66000, "com_3": 41000, "com_31": 39500, "com_32": 16500, "com_33": 10500,
+      "com_4": 36000, "com_41": 132000, "com_5": 27200, "com_51": 23500, "com_52": 1600, "com_53": 4200 
+    },
+    "Kota Medan": {
+      "com_1": 13900, "com_11": 15900, "com_12": 17900, "com_13": 14900, "com_14": 10900,
+      "com_2": 63000, "com_21": 69000, "com_3": 43000, "com_31": 41000, "com_32": 17500, "com_33": 11500,
+      "com_4": 37000, "com_41": 138000, "com_5": 27800, "com_51": 24500, "com_52": 1900, "com_53": 4800
+    },
+    "Kota Yogyakarta": {
+      "com_1": 13400, "com_11": 15400, "com_12": 17400, "com_13": 14400, "com_14": 10400,
+      "com_2": 57000, "com_21": 64000, "com_3": 40500, "com_31": 39000, "com_32": 15500, "com_33": 9500,
+      "com_4": 35500, "com_41": 128000, "com_5": 26500, "com_51": 22000, "com_52": 1400, "com_53": 3500
+    },
+    "Kota Makassar": {
+      "com_1": 14200, "com_11": 16200, "com_12": 18200, "com_13": 15200, "com_14": 11200,
+      "com_2": 66000, "com_21": 71000, "com_3": 46000, "com_31": 43000, "com_32": 18500, "com_33": 12500,
+      "com_4": 38500, "com_41": 142000, "com_5": 28500, "com_51": 26000, "com_52": 2100, "com_53": 5200
+    },
+    "Kota Denpasar": {
+      "com_1": 14100, "com_11": 16100, "com_12": 18100, "com_13": 15100, "com_14": 11100,
+      "com_2": 64000, "com_21": 70000, "com_3": 45500, "com_31": 42500, "com_32": 18000, "com_33": 12000,
+      "com_4": 37500, "com_41": 141000, "com_5": 28200, "com_51": 25500, "com_52": 2000, "com_53": 5100
+    }
   };
 
   console.log("Menyinkronkan harga 14 hari ke belakang untuk grafik Sparkline...");
